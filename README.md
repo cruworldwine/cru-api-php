@@ -6,6 +6,11 @@
 
 # Cru Trading API for PHP
 
+[![CI](https://github.com/cruworldwine/cru-api-php/actions/workflows/ci.yml/badge.svg)](https://github.com/cruworldwine/cru-api-php/actions/workflows/ci.yml)
+[![Packagist](https://img.shields.io/packagist/v/cruworldwine/cru-api-php.svg)](https://packagist.org/packages/cruworldwine/cru-api-php)
+[![PHP version](https://img.shields.io/packagist/dependency-v/cruworldwine/cru-api-php/php.svg)](https://packagist.org/packages/cruworldwine/cru-api-php)
+[![License](https://img.shields.io/packagist/l/cruworldwine/cru-api-php.svg)](https://github.com/cruworldwine/cru-api-php/blob/main/LICENSE)
+
 The PHP SDK for the [Cru Trading API](https://developers.cruworldwine.com), Cru World Wine's
 partner REST API. Read Cru's live bid and offer books for every wine, manage your own bids and
 offers, see your portfolio, purchases and sales, and trade: buy an offer or sell into a bid.
