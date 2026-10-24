@@ -1,0 +1,9 @@
+parameters:
+    level: max
+    paths:
+        - src
+    # Checked as the oldest and newest PHP the package supports.
+    phpVersion:
+        min: 80100
+        max: 80499
+    treatPhpDocTypesAsCertain: false

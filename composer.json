@@ -1,0 +1,35 @@
+{
+    "name": "cruworldwine/cru-api-php",
+    "description": "PHP SDK for the Cru Trading API, Cru World Wine's partner REST API v1.",
+    "type": "library",
+    "license": "Apache-2.0",
+    "keywords": ["cru", "cruworldwine", "wine", "trading", "api", "sdk"],
+    "homepage": "https://developers.cruworldwine.com",
+    "require": {
+        "php": ">=8.1",
+        "guzzlehttp/guzzle": "^7.5"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^10.5 || ^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "CruWorldWine\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CruWorldWine\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse --memory-limit=1G"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
