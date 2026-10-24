@@ -21,7 +21,7 @@ offers, see your portfolio, purchases and sales, and trade: buy an offer or sell
 composer require cruworldwine/cru-api-php
 ```
 
-PHP 8.1 or later, and Guzzle 7.5 or later.
+PHP 8.1 or later, and Guzzle 7.15.2 or a later 7.x release.
 
 ## Connecting
 
