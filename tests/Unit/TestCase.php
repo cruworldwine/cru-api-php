@@ -19,7 +19,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     protected const LWIN = '123456720150600750';
 
-    protected const ENV = ['CRU_CLIENT_KEY', 'CRU_CLIENT_SECRET', 'CRU_ACCESS_TOKEN', 'CRU_MARKET', 'CRU_BASE_URL'];
+    protected const ENV = ['CRU_CLIENT_KEY', 'CRU_CLIENT_SECRET', 'CRU_ACCESS_TOKEN', 'CRU_MARKET', 'CRU_ENVIRONMENT', 'CRU_BASE_URL'];
 
     /** @var list<array{request: RequestInterface, response: mixed, error: mixed, options: array<string, mixed>}> */
     protected array $history = [];

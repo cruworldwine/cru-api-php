@@ -52,11 +52,26 @@ writes are staged: nothing happens until the customer confirms them.
 $app = new Client(accessToken: $tokens['access_token']);
 ```
 
+### Sandbox
+
+The sandbox, `https://{market}.crusandbox.com/api/v1`, is for building and testing: no real money
+or wine changes hands there. It has the same markets as live and takes credentials issued for the
+sandbox. Choose it with `environment` (`live`, the default, or `sandbox`, in any case), or set
+`CRU_ENVIRONMENT=sandbox`:
+
+```php
+use CruWorldWine\Environment;
+
+$sandbox = new Client(clientKey: $key, clientSecret: $secret, market: 'uk', environment: Environment::Sandbox);
+```
+
+A `baseUrl` (or `CRU_BASE_URL`) still wins over both the market and the environment.
+
 ### From the environment
 
 Pass the constructor's arguments by name. Anything not given comes from the environment:
-`CRU_CLIENT_KEY`, `CRU_CLIENT_SECRET`, `CRU_ACCESS_TOKEN`, `CRU_MARKET` and `CRU_BASE_URL`, so
-`new Client()` alone works when they are set.
+`CRU_CLIENT_KEY`, `CRU_CLIENT_SECRET`, `CRU_ACCESS_TOKEN`, `CRU_MARKET`, `CRU_ENVIRONMENT` and
+`CRU_BASE_URL`, so `new Client()` alone works when they are set.
 
 ### Check the connection
 
@@ -64,6 +79,18 @@ Pass the constructor's arguments by name. Anything not given comes from the envi
 $client = $cru->ping()->client;
 echo $client?->organisation, ' ', $client?->market, ' ', $client?->currency, "\n";
 echo implode(', ', $client?->scopes ?? []), "\n";
+```
+
+### Markets
+
+`CruWorldWine\MarketInfo` describes each market without a call: `code`, `name`, `currency` (every
+amount on its host is in it), `symbol`, `liveUrl` and `sandboxUrl`, and `url($environment)`.
+`MarketInfo::all()` gives every market by code, `MarketInfo::lookup('hk')` one (null for a code
+this version does not know), and `$cru->getMarketInfo()` the client's: the market it was built
+for, or the one whose host its `baseUrl` is.
+
+```php
+echo $cru->getMarketInfo()?->currency, "\n"; // GBP
 ```
 
 ### Every option
@@ -74,7 +101,8 @@ echo implode(', ', $client?->scopes ?? []), "\n";
 | `accessToken` | | A connected app's OAuth access token, sent as `Authorization: Bearer`. |
 | `refreshToken`, `oauthClientId`, `oauthClientSecret`, `onTokenRefresh` | | Refresh an expired access token; see below. |
 | `market` | `uk` | `https://{market}.cruworldwine.com/api/v1`: uk, us, hk, sg, eu, ae or cn. |
-| `baseUrl` | | Use this base URL instead of the market's. |
+| `environment` | `live` | `live` or `sandbox` (`https://{market}.crusandbox.com/api/v1`), or an `Environment`. |
+| `baseUrl` | | Use this base URL instead of the market's in the environment. |
 | `timeout` | `30.0` | Seconds to wait to connect, and for an answer. |
 | `maxRetries` | `2` | How many times a call that is safe to retry is retried. |
 | `httpClient` | a new Guzzle client | Any `GuzzleHttp\ClientInterface`. |
@@ -240,7 +268,8 @@ CRU_CAPTURES=/path/to/run vendor/bin/phpunit --testsuite replay   # replays capt
 vendor/bin/phpstan analyse            # static analysis at level max, as PHP 8.1 to 8.4
 ```
 
-- `tests/Unit/`: authentication and the environment, query, path and body encoding, references
+- `tests/Unit/`: authentication and the environment, the sandbox and the markets, query, path and
+  body encoding, references
   kept across retries, retries and back-off, the OAuth refresh, every exception, each kind of
   answer (models, lists, pages, staged writes, confirmations, no content, photos), paging, and
   models given fields, values and types this version does not know.
@@ -251,9 +280,9 @@ vendor/bin/phpstan analyse            # static analysis at level max, as PHP 8.1
 
 ## Development
 
-`src/BaseClient.php`, `src/Internal/Endpoints.php`, `src/Models/` and `src/Resources/` are
-generated from the OpenAPI spec (`spec/openapi.yaml` is the copy they were generated from) and start
-with `DO NOT EDIT`. Cru regenerates them from the API's own repository after each API change:
+`src/BaseClient.php`, `src/Internal/Endpoints.php`, `src/Internal/Markets.php`, `src/Models/` and
+`src/Resources/` are generated from the OpenAPI spec (`api/openapi.yaml` is the copy they were
+generated from) and start with `DO NOT EDIT`. Cru regenerates them from the API's own repository after each API change:
 
 ```bash
 uv run --quiet --with pyyaml==6.0.3 python docs/api/tools/sdkgen/generate.py --php <this checkout>

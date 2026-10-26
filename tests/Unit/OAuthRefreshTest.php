@@ -216,4 +216,13 @@ final class OAuthRefreshTest extends TestCase
 
         self::assertSame('http://localhost:8080/api/oauth/token', (string) $this->request(1)->getUri());
     }
+
+    public function testASandboxClientRefreshesOnTheSandboxHost(): void
+    {
+        $client = $this->app([self::expired(), self::tokens(), self::ok(['bid' => self::bid()])], ['market' => 'hk', 'environment' => 'sandbox']);
+        $client->bids->get('BID-test-0001');
+
+        self::assertSame('https://hk.crusandbox.com/api/v1/bids/BID-test-0001', (string) $this->request(0)->getUri());
+        self::assertSame('https://hk.crusandbox.com/api/oauth/token', (string) $this->request(1)->getUri());
+    }
 }

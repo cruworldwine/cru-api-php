@@ -6,6 +6,7 @@ namespace CruWorldWine;
 
 use CruWorldWine\Exception\CruException;
 use CruWorldWine\Internal\Caller;
+use CruWorldWine\Internal\Markets;
 use CruWorldWine\Internal\Transport;
 use GuzzleHttp\ClientInterface;
 
@@ -19,7 +20,7 @@ use GuzzleHttp\ClientInterface;
  * new refresh token must be stored, since a refresh token works once.
  *
  * What is not given comes from the environment: CRU_CLIENT_KEY, CRU_CLIENT_SECRET,
- * CRU_ACCESS_TOKEN, CRU_MARKET and CRU_BASE_URL.
+ * CRU_ACCESS_TOKEN, CRU_MARKET, CRU_ENVIRONMENT and CRU_BASE_URL.
  *
  * Pass the constructor's arguments by name: their order is not part of the API.
  */
@@ -31,6 +32,8 @@ class Client extends BaseClient
 
     private readonly Transport $transport;
 
+    private readonly ?string $marketCode;
+
     /**
      * @param string|null $clientKey a partner credential's key, sent as CLIENT-KEY
      * @param string|null $clientSecret a partner credential's secret, sent as CLIENT-SECRET
@@ -41,7 +44,9 @@ class Client extends BaseClient
      * @param (callable(array<array-key, mixed>): void)|null $onTokenRefresh called with the token
      *     response after a refresh; store its refresh_token
      * @param string|null $market uk, us, hk, sg, eu, ae or cn: https://{market}.cruworldwine.com/api/v1. Default uk.
-     * @param string|null $baseUrl the API's base URL, in place of the market's
+     * @param Environment|string|null $environment live (the default) or sandbox, in any case: the sandbox
+     *     is https://{market}.crusandbox.com/api/v1, for building and testing with sandbox credentials
+     * @param string|null $baseUrl the API's base URL, in place of the market's in the environment
      * @param float $timeout seconds to wait for a connection, and for an answer
      * @param int $maxRetries how many times a failed call that is safe to retry is retried
      * @param ClientInterface|null $httpClient the Guzzle client to send with
@@ -63,6 +68,7 @@ class Client extends BaseClient
         int $maxRetries = 2,
         ?ClientInterface $httpClient = null,
         ?callable $sleep = null,
+        Environment|string|null $environment = null,
     ) {
         $clientKey = self::option($clientKey, null);
         $clientSecret = self::option($clientSecret, null);
@@ -84,19 +90,22 @@ class Client extends BaseClient
             throw new CruException('timeout must be more than 0 seconds.');
         }
 
+        $environment = self::environment($environment);
+        $market = self::option($market, 'CRU_MARKET');
         $baseUrl = self::option($baseUrl, 'CRU_BASE_URL');
         if ($baseUrl === null) {
-            $market = self::option($market, 'CRU_MARKET') ?? 'uk';
+            $market ??= 'uk';
             if (preg_match('/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/D', $market) !== 1) {
                 throw new CruException('market must be a market code such as uk, not "' . $market . '".');
             }
-            $baseUrl = 'https://' . strtolower($market) . '.cruworldwine.com/api/v1';
+            $baseUrl = str_replace('{market}', strtolower($market), Markets::ENVIRONMENTS[$environment->value]);
         }
         $baseUrl = rtrim($baseUrl, '/');
         $parts = parse_url($baseUrl);
         if (!is_array($parts) || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true) || ($parts['host'] ?? '') === '') {
             throw new CruException('baseUrl must be an http or https URL, such as https://uk.cruworldwine.com/api/v1.');
         }
+        $this->marketCode = self::marketOfHost($parts['host']) ?? $market;
 
         $this->transport = new Transport(
             $httpClient ?? new \GuzzleHttp\Client(),
@@ -126,6 +135,16 @@ class Client extends BaseClient
     public function getBaseUrl(): string
     {
         return $this->transport->getBaseUrl();
+    }
+
+    /**
+     * The market the client calls: the one it was built for or, given a base URL, the market whose
+     * host that is (in either environment), else the market given. Null when there is none, or it
+     * is not a market this version of the SDK knows.
+     */
+    public function getMarketInfo(): ?MarketInfo
+    {
+        return $this->marketCode === null ? null : MarketInfo::lookup($this->marketCode);
     }
 
     /**
@@ -168,6 +187,36 @@ class Client extends BaseClient
     public function __debugInfo(): array
     {
         return ['transport' => $this->transport];
+    }
+
+    private static function environment(Environment|string|null $value): Environment
+    {
+        if ($value instanceof Environment) {
+            return $value;
+        }
+        $value = self::option($value, 'CRU_ENVIRONMENT') ?? Environment::Live->value;
+
+        return Environment::tryFrom(strtolower($value))
+            ?? throw new CruException('environment must be live or sandbox, not "' . $value . '".');
+    }
+
+    /**
+     * The host's first label when the host is that market's in one of the environments.
+     */
+    private static function marketOfHost(string $host): ?string
+    {
+        $host = strtolower($host);
+        $label = strstr($host, '.', true);
+        if ($label === false || $label === '') {
+            return null;
+        }
+        foreach (Markets::ENVIRONMENTS as $template) {
+            if (parse_url(str_replace('{market}', $label, $template), PHP_URL_HOST) === $host) {
+                return $label;
+            }
+        }
+
+        return null;
     }
 
     private static function option(?string $value, ?string $env): ?string
