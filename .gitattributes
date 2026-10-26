@@ -1,0 +1,9 @@
+# Left out of the package Composer installs: it gets src/, composer.json, README.md, CHANGELOG.md
+# and LICENSE.
+/.github export-ignore
+/api export-ignore
+/tests export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/phpstan.neon export-ignore
+/phpunit.xml.dist export-ignore
