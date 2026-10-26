@@ -26,7 +26,7 @@ use GuzzleHttp\ClientInterface;
  */
 class Client extends BaseClient
 {
-    public const VERSION = '0.1.0';
+    public const VERSION = '0.2.0';
 
     public const USER_AGENT = 'cruworldwine-php/' . self::VERSION;
 

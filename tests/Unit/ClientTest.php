@@ -21,7 +21,7 @@ final class ClientTest extends TestCase
         self::assertSame('cs_test', $request->getHeaderLine('CLIENT-SECRET'));
         self::assertFalse($request->hasHeader('Authorization'));
         self::assertSame('application/json', $request->getHeaderLine('Accept'));
-        self::assertSame('cruworldwine-php/0.1.0', $request->getHeaderLine('User-Agent'));
+        self::assertSame('cruworldwine-php/0.2.0', $request->getHeaderLine('User-Agent'));
         self::assertTrue($client->isPartner());
     }
 

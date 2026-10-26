@@ -1,0 +1,107 @@
+name: Release
+
+# Packagist publishes a version itself, through the repository's webhook, as soon as its tag is
+# pushed: this workflow cannot hold a release back. It checks the tag (the same checks as CI, and
+# that the tag, Client::VERSION and the changelog agree), makes the GitHub release from the
+# changelog, and confirms Packagist has the version. If it fails, the version is already public:
+# fix it in a new patch release, and never move or reuse a tag.
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: Checks
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
+  version:
+    name: The tag, Client::VERSION and the changelog agree
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(sed -n "s/^    public const VERSION = '\(.*\)';$/\1/p" src/Client.php)"
+          if [ "$TAG" != "v$version" ]; then
+            echo "::error::Tag $TAG does not match Client::VERSION in src/Client.php, '$version'"
+            exit 1
+          fi
+          if ! grep -q "^## \[$version\] - " CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no '## [$version] - <date>' section"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  github-release:
+    name: GitHub Release
+    needs: [checks, version]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write # to create the release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Release notes from the changelog
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          awk -v heading="## [$VERSION] - " '
+            index($0, heading) == 1 { found = 1; next }
+            found && (/^## \[/ || /^\[[^]]+\]: /) { exit }
+            found { print }
+          ' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          if ! grep -q '[^[:space:]]' "$RUNNER_TEMP/notes.md"; then
+            echo "::error::The CHANGELOG.md section for $VERSION is empty"
+            exit 1
+          fi
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          prerelease=()
+          case "$TAG" in *-*) prerelease=(--prerelease) ;; esac
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$TAG" \
+            --notes-file "$RUNNER_TEMP/notes.md" "${prerelease[@]}"
+
+  packagist:
+    name: Packagist has the version
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions: {}
+    steps:
+      - name: Wait for the version on repo.packagist.org
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          url="https://repo.packagist.org/p2/cruworldwine/cru-api-php.json"
+          for _ in $(seq 1 40); do
+            if curl -fsSL "$url" | jq -e --arg v "v$VERSION" '.packages["cruworldwine/cru-api-php"][] | select(.version == $v)' > /dev/null; then
+              echo "Packagist has v$VERSION: https://packagist.org/packages/cruworldwine/cru-api-php#v$VERSION"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Packagist does not list v$VERSION after 10 minutes. Check the webhook under Settings > Webhooks, or press Update on https://packagist.org/packages/cruworldwine/cru-api-php"
+          exit 1

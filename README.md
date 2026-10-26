@@ -269,10 +269,9 @@ vendor/bin/phpstan analyse            # static analysis at level max, as PHP 8.1
 ```
 
 - `tests/Unit/`: authentication and the environment, the sandbox and the markets, query, path and
-  body encoding, references
-  kept across retries, retries and back-off, the OAuth refresh, every exception, each kind of
-  answer (models, lists, pages, staged writes, confirmations, no content, photos), paging, and
-  models given fields, values and types this version does not know.
+  body encoding, references kept across retries, retries and back-off, the OAuth refresh, every
+  exception, each kind of answer (models, lists, pages, staged writes, confirmations, no content,
+  photos), paging, and models given fields, values and types this version does not know.
 - `tests/Replay/`: replays real API answers through the method that asks for each one and checks
   every typed field, nested ones included, against what the API sent. It runs when `CRU_CAPTURES`
   names a capture run, and is skipped otherwise. Captures hold customer data, so keep them out of
@@ -289,6 +288,20 @@ uv run --quiet --with pyyaml==6.0.3 python docs/api/tools/sdkgen/generate.py --p
 ```
 
 The rest of `src/` is written by hand.
+
+### Releasing
+
+Packagist publishes a version as soon as its tag is pushed, so tag only a commit on `main` whose
+CI has passed:
+
+1. In a pull request, set `Client::VERSION` in `src/Client.php` (and the User-Agent test that
+   names it), and move the changelog's `[Unreleased]` entries under `## [x.y.z] - <date>`.
+2. Once it is merged, tag the merge commit `vx.y.z` and push the tag.
+
+The Release workflow then checks the tag as CI does, refuses a tag that does not match
+`Client::VERSION` or the changelog, makes the GitHub release from the changelog, and waits for
+Packagist to list the version. A version on Packagist is public for good: fix a bad one with a new
+patch release, never by moving its tag.
 
 ## License
 

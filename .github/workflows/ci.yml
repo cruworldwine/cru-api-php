@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_call: # the Release workflow runs these same checks on the tag
 
 permissions:
   contents: read
