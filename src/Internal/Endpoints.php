@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace CruWorldWine\Internal;
 
+use CruWorldWine\Models\AccountSummary;
 use CruWorldWine\Models\BidResult;
 use CruWorldWine\Models\BuyResult;
 use CruWorldWine\Models\Confirmation;
@@ -25,6 +26,12 @@ use CruWorldWine\Models\Purchase;
 use CruWorldWine\Models\Sale;
 use CruWorldWine\Models\SellResult;
 use CruWorldWine\Models\Warehouse;
+use CruWorldWine\Models\Webhook;
+use CruWorldWine\Models\WebhookDelivery;
+use CruWorldWine\Models\WebhookDeliveryDetail;
+use CruWorldWine\Models\WebhookEventSummary;
+use CruWorldWine\Models\WebhookRetry;
+use CruWorldWine\Models\WebhookWithSecret;
 use CruWorldWine\Models\Wine;
 use CruWorldWine\Models\WineDetail;
 
@@ -43,6 +50,7 @@ final class Endpoints
      */
     public const ALL = [
         'ping' => ['method' => 'GET', 'path' => '/ping', 'resource' => null, 'name' => 'ping', 'kind' => 'get', 'model' => Ping::class, 'itemsKey' => null],
+        'getAccount' => ['method' => 'GET', 'path' => '/account', 'resource' => 'account', 'name' => 'get', 'kind' => 'get', 'model' => AccountSummary::class, 'itemsKey' => null],
         'listWarehouses' => ['method' => 'GET', 'path' => '/warehouses', 'resource' => 'warehouses', 'name' => 'list', 'kind' => 'list', 'model' => Warehouse::class, 'itemsKey' => 'warehouses'],
         'getWarehouse' => ['method' => 'GET', 'path' => '/warehouses/{code}', 'resource' => 'warehouses', 'name' => 'get', 'kind' => 'get', 'model' => Warehouse::class, 'itemsKey' => 'warehouse'],
         'listInbondWarehouses' => ['method' => 'GET', 'path' => '/warehouses/inbond', 'resource' => 'inbondWarehouses', 'name' => 'list', 'kind' => 'list', 'model' => InbondWarehouse::class, 'itemsKey' => 'inbond_warehouses'],
@@ -81,6 +89,19 @@ final class Endpoints
         'getConfirmation' => ['method' => 'GET', 'path' => '/confirmations/{code}', 'resource' => 'confirmations', 'name' => 'get', 'kind' => 'get', 'model' => Confirmation::class, 'itemsKey' => 'confirmation'],
         'confirmInstruction' => ['method' => 'POST', 'path' => '/confirmations/{code}', 'resource' => 'confirmations', 'name' => 'confirm', 'kind' => 'confirm', 'model' => InstructionResult::class, 'itemsKey' => null],
         'cancelConfirmation' => ['method' => 'DELETE', 'path' => '/confirmations/{code}', 'resource' => 'confirmations', 'name' => 'cancel', 'kind' => 'empty', 'model' => null, 'itemsKey' => null],
+        'listWebhooks' => ['method' => 'GET', 'path' => '/webhooks', 'resource' => 'webhooks', 'name' => 'list', 'kind' => 'list', 'model' => Webhook::class, 'itemsKey' => 'webhooks'],
+        'createWebhook' => ['method' => 'POST', 'path' => '/webhooks', 'resource' => 'webhooks', 'name' => 'create', 'kind' => 'get', 'model' => WebhookWithSecret::class, 'itemsKey' => 'webhook'],
+        'getWebhook' => ['method' => 'GET', 'path' => '/webhooks/{id}', 'resource' => 'webhooks', 'name' => 'get', 'kind' => 'get', 'model' => Webhook::class, 'itemsKey' => 'webhook'],
+        'updateWebhook' => ['method' => 'PATCH', 'path' => '/webhooks/{id}', 'resource' => 'webhooks', 'name' => 'update', 'kind' => 'get', 'model' => Webhook::class, 'itemsKey' => 'webhook'],
+        'deleteWebhook' => ['method' => 'DELETE', 'path' => '/webhooks/{id}', 'resource' => 'webhooks', 'name' => 'remove', 'kind' => 'empty', 'model' => null, 'itemsKey' => null],
+        'testWebhook' => ['method' => 'POST', 'path' => '/webhooks/{id}/test', 'resource' => 'webhooks', 'name' => 'test', 'kind' => 'get', 'model' => WebhookDelivery::class, 'itemsKey' => 'delivery'],
+        'rotateWebhookSecret' => ['method' => 'POST', 'path' => '/webhooks/{id}/rotate', 'resource' => 'webhooks', 'name' => 'rotateSecret', 'kind' => 'get', 'model' => WebhookWithSecret::class, 'itemsKey' => 'webhook'],
+        'retryWebhook' => ['method' => 'POST', 'path' => '/webhooks/{id}/retry', 'resource' => 'webhooks', 'name' => 'retry', 'kind' => 'get', 'model' => WebhookRetry::class, 'itemsKey' => null],
+        'listWebhookDeliveries' => ['method' => 'GET', 'path' => '/webhooks/deliveries', 'resource' => 'webhookDeliveries', 'name' => 'list', 'kind' => 'page', 'model' => WebhookDelivery::class, 'itemsKey' => 'deliveries'],
+        'getWebhookDelivery' => ['method' => 'GET', 'path' => '/webhooks/deliveries/{id}', 'resource' => 'webhookDeliveries', 'name' => 'get', 'kind' => 'get', 'model' => WebhookDeliveryDetail::class, 'itemsKey' => 'delivery'],
+        'resendWebhookDelivery' => ['method' => 'POST', 'path' => '/webhooks/deliveries/{id}/resend', 'resource' => 'webhookDeliveries', 'name' => 'resend', 'kind' => 'get', 'model' => WebhookDelivery::class, 'itemsKey' => 'delivery'],
+        'listWebhookEvents' => ['method' => 'GET', 'path' => '/webhooks/events', 'resource' => 'webhookEvents', 'name' => 'list', 'kind' => 'list', 'model' => WebhookEventSummary::class, 'itemsKey' => 'events'],
+        'resendWebhookEvent' => ['method' => 'POST', 'path' => '/webhooks/events/{id}/resend', 'resource' => 'webhookEvents', 'name' => 'resend', 'kind' => 'list', 'model' => WebhookDelivery::class, 'itemsKey' => 'deliveries'],
     ];
 
     /**

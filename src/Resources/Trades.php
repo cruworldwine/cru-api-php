@@ -46,6 +46,10 @@ final class Trades
      *   A line with no units stored with Cru matches none. Anything else is refused with
      *   VALIDATION_UNSUPPORTED_VALUE. One of: in_portfolio, for_sale, sold, in_transit, delivered.
      *   A list, or a comma-separated string.
+     * - purchase_ref: Only the lines of these purchases: up to 50 comma-separated, in any case,
+     *   each ord- and a number, as each purchase’s purchase_ref and a purchase.created webhook’s
+     *   data.purchase_ref give it. Anything else is refused with VALIDATION_INVALID_VALUE. A list,
+     *   or a comma-separated string.
      * - sort: What to order by: traded_at, the date of the order, the only choice. One of:
      *   traded_at.
      * - direction: desc for newest first, or asc for oldest first. One of: desc, asc.
@@ -56,6 +60,7 @@ final class Trades
      * @param array{
      *     lwin?: string|list<string>|null,
      *     status?: string|list<string>|null,
+     *     purchase_ref?: string|list<string>|null,
      *     sort?: string|null,
      *     direction?: string|null,
      *     limit?: int|null,
@@ -83,8 +88,10 @@ final class Trades
      * the Cru warehouse deliver_to names, by deliver_by. status says how far it has got:
      * transfer_needed until a transfer to Cru is booked, then awaiting_transfer, with transfer_ref
      * naming the transfer; on_purchase_order while it is due in on a purchase order; and
-     * delivered_to_cru once it is there. Wine stored with Cru has no deliver_to, and is always
-     * delivered_to_cru.
+     * delivered_to_cru once it is there. A sale from your offers feed (or Liv-ex) is
+     * on_purchase_order until every unit of it has reached Cru, then delivered_to_cru; one filled
+     * from wine already stored with Cru is delivered_to_cru at once. Wine stored with Cru has no
+     * deliver_to, and is always delivered_to_cru.
      *
      * Scope: trades:read.
      *
@@ -101,6 +108,10 @@ final class Trades
      *   warehouses, comma-separated: UK_DRAK, HK_KERRY, SG_TOLL, FR_DARTESS, US_NAPA. Wine stored
      *   with Cru matches none. An unknown code is refused with VALIDATION_INVALID_VALUE. One of:
      *   UK_DRAK, HK_KERRY, SG_TOLL, FR_DARTESS, US_NAPA. A list, or a comma-separated string.
+     * - sale_ref: Only the units of these sales: up to 50 comma-separated, in any case, each
+     *   stpo-, lx-, csi- or esp- and a number, as each sale’s sale_ref and a sale.created webhook’s
+     *   data.sale_ref give it. Anything else is refused with VALIDATION_INVALID_VALUE. A list, or a
+     *   comma-separated string.
      * - sort: What to order by: traded_at, the date of the sale, the only choice. One of:
      *   traded_at.
      * - direction: desc for newest first, or asc for oldest first. One of: desc, asc.
@@ -112,6 +123,7 @@ final class Trades
      *     lwin?: string|list<string>|null,
      *     status?: string|list<string>|null,
      *     deliverable_warehouse_code?: string|list<string>|null,
+     *     sale_ref?: string|list<string>|null,
      *     sort?: string|null,
      *     direction?: string|null,
      *     limit?: int|null,

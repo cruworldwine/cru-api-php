@@ -25,6 +25,7 @@ final class SurfaceTest extends TestCase
         $lwin = self::LWIN;
 
         yield 'ping' => [fn (Client $c) => $c->ping(), 'GET', '/ping', ['pong' => true], Models\Ping::class];
+        yield 'account.get' => [fn (Client $c) => $c->account->get(), 'GET', '/account', ['currency' => 'GBP'], Models\AccountSummary::class];
         yield 'warehouses.list' => [fn (Client $c) => $c->warehouses->list(), 'GET', '/warehouses', ['warehouses' => [[]]], Models\Warehouse::class];
         yield 'warehouses.get' => [fn (Client $c) => $c->warehouses->get('UK_DRAK'), 'GET', '/warehouses/UK_DRAK', ['warehouse' => []], Models\Warehouse::class];
         yield 'inbondWarehouses.list' => [fn (Client $c) => $c->inbondWarehouses->list(), 'GET', '/warehouses/inbond', ['inbond_warehouses' => [[]]], Models\InbondWarehouse::class];
@@ -63,6 +64,19 @@ final class SurfaceTest extends TestCase
         yield 'confirmations.get' => [fn (Client $c) => $c->confirmations->get('cnf_x'), 'GET', '/confirmations/cnf_x', ['confirmation' => []], Models\Confirmation::class];
         yield 'confirmations.confirm' => [fn (Client $c) => $c->confirmations->confirm('cnf_x'), 'POST', '/confirmations/cnf_x', ['action' => 'bid.renew'], Models\BidResult::class];
         yield 'confirmations.cancel' => [fn (Client $c) => $c->confirmations->cancel('cnf_x'), 'DELETE', '/confirmations/cnf_x', '@empty', 'void'];
+        yield 'webhooks.list' => [fn (Client $c) => $c->webhooks->list(), 'GET', '/webhooks', ['webhooks' => [[]]], Models\Webhook::class];
+        yield 'webhooks.create' => [fn (Client $c) => $c->webhooks->create(['url' => 'https://example.com/hook']), 'POST', '/webhooks', ['webhook' => []], Models\WebhookWithSecret::class];
+        yield 'webhooks.get' => [fn (Client $c) => $c->webhooks->get('whs_x'), 'GET', '/webhooks/whs_x', ['webhook' => []], Models\Webhook::class];
+        yield 'webhooks.update' => [fn (Client $c) => $c->webhooks->update('whs_x', ['enabled' => true]), 'PATCH', '/webhooks/whs_x', ['webhook' => []], Models\Webhook::class];
+        yield 'webhooks.remove' => [fn (Client $c) => $c->webhooks->remove('whs_x'), 'DELETE', '/webhooks/whs_x', '@empty', 'void'];
+        yield 'webhooks.test' => [fn (Client $c) => $c->webhooks->test('whs_x'), 'POST', '/webhooks/whs_x/test', ['delivery' => []], Models\WebhookDelivery::class];
+        yield 'webhooks.rotateSecret' => [fn (Client $c) => $c->webhooks->rotateSecret('whs_x'), 'POST', '/webhooks/whs_x/rotate', ['webhook' => []], Models\WebhookWithSecret::class];
+        yield 'webhooks.retry' => [fn (Client $c) => $c->webhooks->retry('whs_x'), 'POST', '/webhooks/whs_x/retry', ['queued' => 0], Models\WebhookRetry::class];
+        yield 'webhookDeliveries.list' => [fn (Client $c) => $c->webhookDeliveries->list(), 'GET', '/webhooks/deliveries', ['deliveries' => [[]], '@page' => $page], Models\WebhookDelivery::class];
+        yield 'webhookDeliveries.get' => [fn (Client $c) => $c->webhookDeliveries->get('dlv_x'), 'GET', '/webhooks/deliveries/dlv_x', ['delivery' => []], Models\WebhookDeliveryDetail::class];
+        yield 'webhookDeliveries.resend' => [fn (Client $c) => $c->webhookDeliveries->resend('dlv_x'), 'POST', '/webhooks/deliveries/dlv_x/resend', ['delivery' => []], Models\WebhookDelivery::class];
+        yield 'webhookEvents.list' => [fn (Client $c) => $c->webhookEvents->list(), 'GET', '/webhooks/events', ['events' => [[]]], Models\WebhookEventSummary::class];
+        yield 'webhookEvents.resend' => [fn (Client $c) => $c->webhookEvents->resend('evt_x'), 'POST', '/webhooks/events/evt_x/resend', ['deliveries' => [[]]], Models\WebhookDelivery::class];
     }
 
     /**

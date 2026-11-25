@@ -9,6 +9,7 @@ use CruWorldWine\Exception\CruException;
 use CruWorldWine\Internal\Caller;
 use CruWorldWine\Internal\Operation;
 use CruWorldWine\Models\Ping;
+use CruWorldWine\Resources\Account;
 use CruWorldWine\Resources\Bids;
 use CruWorldWine\Resources\Confirmations;
 use CruWorldWine\Resources\InbondAddresses;
@@ -19,6 +20,9 @@ use CruWorldWine\Resources\Photos;
 use CruWorldWine\Resources\Portfolio;
 use CruWorldWine\Resources\Trades;
 use CruWorldWine\Resources\Warehouses;
+use CruWorldWine\Resources\WebhookDeliveries;
+use CruWorldWine\Resources\WebhookEvents;
+use CruWorldWine\Resources\Webhooks;
 use CruWorldWine\Resources\Wines;
 
 /**
@@ -26,6 +30,11 @@ use CruWorldWine\Resources\Wines;
  */
 abstract class BaseClient
 {
+    /**
+     * Your account.
+     */
+    public readonly Account $account;
+
     /**
      * List warehouses; Retrieve a warehouse.
      */
@@ -85,11 +94,28 @@ abstract class BaseClient
      */
     public readonly Confirmations $confirmations;
 
+    /**
+     * List your webhooks; Add a webhook; Retrieve a webhook; Change a webhook; Delete a webhook;
+     * Send a test; Rotate the signing secret; Send failed deliveries again.
+     */
+    public readonly Webhooks $webhooks;
+
+    /**
+     * List deliveries; Retrieve a delivery; Send a delivery again.
+     */
+    public readonly WebhookDeliveries $webhookDeliveries;
+
+    /**
+     * List events; Send an event again.
+     */
+    public readonly WebhookEvents $webhookEvents;
+
     protected readonly Caller $caller;
 
     protected function __construct(Caller $caller)
     {
         $this->caller = $caller;
+        $this->account = new Account($caller);
         $this->warehouses = new Warehouses($caller);
         $this->inbondWarehouses = new InbondWarehouses($caller);
         $this->wines = new Wines($caller);
@@ -101,6 +127,9 @@ abstract class BaseClient
         $this->trades = new Trades($caller);
         $this->inbondAddresses = new InbondAddresses($caller);
         $this->confirmations = new Confirmations($caller);
+        $this->webhooks = new Webhooks($caller);
+        $this->webhookDeliveries = new WebhookDeliveries($caller);
+        $this->webhookEvents = new WebhookEvents($caller);
     }
 
     /**

@@ -14,6 +14,13 @@ use CruWorldWine\Model;
 class ApiClient extends Model
 {
     /**
+     * How the request was made: partner for a client key and secret, whether Cru issued it to a
+     * partner or to the customer themselves; customer for a connected app’s access token. One of:
+     * partner, customer; more may be added.
+     */
+    public readonly ?string $kind;
+
+    /**
      * live on production, test everywhere else.
      */
     public readonly ?string $environment;
@@ -22,6 +29,11 @@ class ApiClient extends Model
      * The start of the client key that called, such as cru_live_ABCD... Null for a connected app.
      */
     public readonly ?string $key_prefix;
+
+    /**
+     * The Cru account number of the customer the credential or token acts for, five digits.
+     */
+    public readonly ?string $account_number;
 
     /**
      * The account the credential acts for.
@@ -63,8 +75,10 @@ class ApiClient extends Model
     public function __construct(array $raw)
     {
         parent::__construct($raw);
+        $this->kind = Coerce::string($raw['kind'] ?? null);
         $this->environment = Coerce::string($raw['environment'] ?? null);
         $this->key_prefix = Coerce::string($raw['key_prefix'] ?? null);
+        $this->account_number = Coerce::string($raw['account_number'] ?? null);
         $this->organisation = Coerce::string($raw['organisation'] ?? null);
         $this->label = Coerce::string($raw['label'] ?? null);
         $this->market = Coerce::string($raw['market'] ?? null);

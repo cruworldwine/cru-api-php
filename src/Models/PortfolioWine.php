@@ -39,6 +39,12 @@ class PortfolioWine extends Model
     public readonly ?string $product_url;
 
     /**
+     * The bottle photo Cru’s site shows beside the wine, to show beside it in yours. Never null: a
+     * wine Cru has no photo of gets the site’s placeholder bottle. A URL.
+     */
+    public readonly ?string $image_url;
+
+    /**
      * ISO 4217 currency of every price here: the currency of the market you called. A price bought
      * or listed in another currency is converted at today’s rate. One of: GBP, USD, HKD, SGD, EUR,
      * AED, CNY; more may be added.
@@ -88,6 +94,7 @@ class PortfolioWine extends Model
         $this->vintage = Coerce::int($raw['vintage'] ?? null);
         $this->pack_size = Coerce::string($raw['pack_size'] ?? null);
         $this->product_url = Coerce::string($raw['product_url'] ?? null);
+        $this->image_url = Coerce::string($raw['image_url'] ?? null);
         $this->currency = Coerce::string($raw['currency'] ?? null);
         $this->total_quantity = Coerce::int($raw['total_quantity'] ?? null);
         $this->market_price = Coerce::float($raw['market_price'] ?? null);
