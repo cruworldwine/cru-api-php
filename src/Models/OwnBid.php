@@ -49,6 +49,12 @@ class OwnBid extends Model
     public readonly ?string $product_url;
 
     /**
+     * The bottle photo Cru’s site shows beside the wine, to show beside it in yours. Never null: a
+     * wine Cru has no photo of gets the site’s placeholder bottle. A URL.
+     */
+    public readonly ?string $image_url;
+
+    /**
      * Gross price per unit you offered — before Cru’s commission — in the currency of the market
      * you called. A bid placed in another currency is converted at today’s rate, as My Bids on Cru
      * shows it.
@@ -153,6 +159,7 @@ class OwnBid extends Model
         $this->vintage = Coerce::int($raw['vintage'] ?? null);
         $this->pack_size = Coerce::string($raw['pack_size'] ?? null);
         $this->product_url = Coerce::string($raw['product_url'] ?? null);
+        $this->image_url = Coerce::string($raw['image_url'] ?? null);
         $this->price = Coerce::float($raw['price'] ?? null);
         $this->currency = Coerce::string($raw['currency'] ?? null);
         $this->bid_currency = Coerce::string($raw['bid_currency'] ?? null);

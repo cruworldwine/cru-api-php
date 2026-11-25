@@ -123,8 +123,9 @@ echo $write->result?->bid?->code, "\n";
 ## Calls
 
 Every endpoint is a method on a resource of the client, named as in the API reference:
-`$cru->warehouses`, `inbondWarehouses`, `wines`, `market`, `photos`, `bids`, `offers`,
-`portfolio`, `trades`, `inbondAddresses` and `confirmations`; `ping()` is on the client itself.
+`$cru->account`, `warehouses`, `inbondWarehouses`, `wines`, `market`, `photos`, `bids`, `offers`,
+`portfolio`, `trades`, `inbondAddresses`, `confirmations`, `webhooks`, `webhookDeliveries` and
+`webhookEvents`; `ping()` is on the client itself.
 
 Path parameters come first, by position; every other parameter goes in one array, named as in the
 API. A list parameter takes a PHP list or a comma-separated string; null values are left out.
@@ -189,6 +190,45 @@ them:
   enums, so a new value is just a new string.
 
 `Model::fromArray($array)` builds one, for tests say.
+
+## Webhooks
+
+Rather than polling your trades, have Cru send your server a signed `sale.created` when you sell
+and a `purchase.created` when an order of yours is paid. Add a webhook with a client key and secret
+granted `webhooks:manage`, and keep the signing secret, which is shown once:
+
+```php
+$hook = $cru->webhooks->create(['url' => 'https://example.com/cru/webhooks']);
+saveSecret($hook->signing_secret); // whsec_...
+$cru->webhooks->test($hook->id);   // Cru sends a webhook.test within seconds
+```
+
+Check every delivery with `Webhook::verify()` before trusting it. It throws
+`WebhookVerificationException` for a body Cru did not sign with that secret, or one more than five
+minutes old, and accepts either signature during the day after `rotateSecret()`:
+
+```php
+use CruWorldWine\Exception\WebhookVerificationException;
+use CruWorldWine\Webhook;
+
+$body = file_get_contents('php://input'); // the raw bytes, before any JSON decoding
+try {
+    $event = Webhook::verify($body, getallheaders(), getenv('CRU_WEBHOOK_SECRET'));
+} catch (WebhookVerificationException) {
+    http_response_code(401);
+    exit;
+}
+if ($event->type === 'sale.created') {
+    $sale = Webhook::saleCreated($event); // $sale->sale_ref, $sale->sales
+    queueWork($event->id, $sale);         // deduplicate on $event->id; answer first, work afterwards
+}
+http_response_code(200);
+```
+
+`$cru->webhookDeliveries` shows every delivery and its attempts, and
+`$cru->webhookEvents->list(['after' => $lastId])` lists every event since the last one you handled,
+to catch up after an outage. [The webhooks guide](https://developers.cruworldwine.com/guides/webhooks)
+has the rest.
 
 ## Errors
 

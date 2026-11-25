@@ -34,6 +34,12 @@ class Purchase extends Model
     public readonly ?string $pack_size;
 
     /**
+     * The bottle photo Cru’s site shows beside the wine, to show beside it in yours. Never null: a
+     * wine Cru has no photo of gets the site’s placeholder bottle. A URL.
+     */
+    public readonly ?string $image_url;
+
+    /**
      * Units in this order line, less any cancelled or refunded.
      */
     public readonly ?int $quantity;
@@ -63,6 +69,13 @@ class Purchase extends Model
      * When the order was placed, RFC 3339 UTC. An ISO 8601 date and time.
      */
     public readonly ?string $traded_at;
+
+    /**
+     * The purchase this line is part of, ord- and a number, such as ord-90211: the same on every
+     * line of one order. A purchase.created webhook names it as data.purchase_ref, and the
+     * purchase_ref filter takes it.
+     */
+    public readonly ?string $purchase_ref;
 
     /**
      * The order’s status, as Cru’s site labels it, such as “Paid and Processing”.
@@ -104,12 +117,14 @@ class Purchase extends Model
         $this->wine_name = Coerce::string($raw['wine_name'] ?? null);
         $this->vintage = Coerce::int($raw['vintage'] ?? null);
         $this->pack_size = Coerce::string($raw['pack_size'] ?? null);
+        $this->image_url = Coerce::string($raw['image_url'] ?? null);
         $this->quantity = Coerce::int($raw['quantity'] ?? null);
         $this->price = Coerce::float($raw['price'] ?? null);
         $this->total = Coerce::float($raw['total'] ?? null);
         $this->currency = Coerce::string($raw['currency'] ?? null);
         $this->reference = Coerce::string($raw['reference'] ?? null);
         $this->traded_at = Coerce::string($raw['traded_at'] ?? null);
+        $this->purchase_ref = Coerce::string($raw['purchase_ref'] ?? null);
         $this->order_status = Coerce::string($raw['order_status'] ?? null);
         $this->order_url = Coerce::string($raw['order_url'] ?? null);
         $this->invoice_number = Coerce::string($raw['invoice_number'] ?? null);

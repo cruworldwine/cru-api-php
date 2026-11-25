@@ -62,6 +62,12 @@ class PortfolioLine extends Model
     public readonly ?LinePricing $pricing;
 
     /**
+     * For wine held outside Cru that the customer added by uploading a wine list on Cru’s site: the
+     * list it came from. null for every other line.
+     */
+    public readonly ?PortfolioLineImport $import;
+
+    /**
      * Photos of the units in this line, on Cru’s media. [] when there are none.
      *
      * @var list<string>|null
@@ -89,6 +95,7 @@ class PortfolioLine extends Model
         $this->condition_text = Coerce::string($raw['condition_text'] ?? null);
         $this->is_listed = Coerce::bool($raw['is_listed'] ?? null);
         $this->pricing = Coerce::model($raw['pricing'] ?? null, LinePricing::class);
+        $this->import = Coerce::model($raw['import'] ?? null, PortfolioLineImport::class);
         $this->photo_urls = Coerce::listOf($raw['photo_urls'] ?? null, Coerce::string(...));
         $this->quantity = Coerce::int($raw['quantity'] ?? null);
         $this->warehouse = Coerce::model($raw['warehouse'] ?? null, LineWarehouse::class);

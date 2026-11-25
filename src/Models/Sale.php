@@ -34,6 +34,12 @@ class Sale extends Model
     public readonly ?string $pack_size;
 
     /**
+     * The bottle photo Cru’s site shows beside the wine, to show beside it in yours. Never null: a
+     * wine Cru has no photo of gets the site’s placeholder bottle. A URL.
+     */
+    public readonly ?string $image_url;
+
+    /**
      * Always 1: each unit sold is its own sale.
      */
     public readonly ?int $quantity;
@@ -66,6 +72,21 @@ class Sale extends Model
      * When it sold, RFC 3339 UTC. An ISO 8601 date and time.
      */
     public readonly ?string $traded_at;
+
+    /**
+     * The sale this unit was part of, a prefix and a number: stpo- for wine sold from a supplier’s
+     * stock, shared by every unit of that sale, as is lx- for a sale through Liv-ex; csi- for one
+     * unit stored with Cru; esp- for one unit held outside Cru. A sale.created webhook names it as
+     * data.sale_ref, and the sale_ref filter takes it.
+     */
+    public readonly ?string $sale_ref;
+
+    /**
+     * The trade’s own number on a stpo- or lx- sale: the supplier’s purchase order or trade number,
+     * or the Liv-ex trade number, LX and digits. null until the order is placed with the supplier,
+     * and always on csi- and esp- sales.
+     */
+    public readonly ?string $trade_id;
 
     /**
      * The unit’s Cru ID.
@@ -139,9 +160,10 @@ class Sale extends Model
 
     /**
      * Where the wine is in reaching Cru, as the status filter takes it: transfer_needed,
-     * awaiting_transfer, on_purchase_order or delivered_to_cru. Wine stored with Cru is always
-     * delivered_to_cru. One of: transfer_needed, awaiting_transfer, on_purchase_order,
-     * delivered_to_cru; more may be added.
+     * awaiting_transfer, on_purchase_order or delivered_to_cru. A sale from your offers feed is
+     * on_purchase_order until every unit of it has reached Cru, unless it was filled from wine
+     * already stored with Cru. Wine stored with Cru is always delivered_to_cru. One of:
+     * transfer_needed, awaiting_transfer, on_purchase_order, delivered_to_cru; more may be added.
      */
     public readonly ?string $status;
 
@@ -155,12 +177,15 @@ class Sale extends Model
         $this->wine_name = Coerce::string($raw['wine_name'] ?? null);
         $this->vintage = Coerce::int($raw['vintage'] ?? null);
         $this->pack_size = Coerce::string($raw['pack_size'] ?? null);
+        $this->image_url = Coerce::string($raw['image_url'] ?? null);
         $this->quantity = Coerce::int($raw['quantity'] ?? null);
         $this->price = Coerce::float($raw['price'] ?? null);
         $this->total = Coerce::float($raw['total'] ?? null);
         $this->currency = Coerce::string($raw['currency'] ?? null);
         $this->reference = Coerce::string($raw['reference'] ?? null);
         $this->traded_at = Coerce::string($raw['traded_at'] ?? null);
+        $this->sale_ref = Coerce::string($raw['sale_ref'] ?? null);
+        $this->trade_id = Coerce::string($raw['trade_id'] ?? null);
         $this->cru_id = Coerce::int($raw['cru_id'] ?? null);
         $this->transfer_ref = Coerce::string($raw['transfer_ref'] ?? null);
         $this->cost = Coerce::float($raw['cost'] ?? null);

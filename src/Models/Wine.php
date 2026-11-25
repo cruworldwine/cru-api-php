@@ -54,6 +54,12 @@ class Wine extends Model
     public readonly ?string $product_url;
 
     /**
+     * The bottle photo Cru’s site shows beside the wine, to show beside it in yours. Never null: a
+     * wine Cru has no photo of gets the site’s placeholder bottle. A URL.
+     */
+    public readonly ?string $image_url;
+
+    /**
      * Always present: Cru’s market price in data.currency, or null when it has none.
      */
     public readonly ?float $market_price;
@@ -86,6 +92,7 @@ class Wine extends Model
         $this->region = Coerce::string($raw['region'] ?? null);
         $this->colour = Coerce::string($raw['colour'] ?? null);
         $this->product_url = Coerce::string($raw['product_url'] ?? null);
+        $this->image_url = Coerce::string($raw['image_url'] ?? null);
         $this->market_price = Coerce::float($raw['market_price'] ?? null);
         $this->bids = Coerce::modelList($raw['bids'] ?? null, MarketBid::class);
         $this->offers = Coerce::modelList($raw['offers'] ?? null, MarketOffer::class);
